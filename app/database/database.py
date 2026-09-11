@@ -20,6 +20,12 @@ def _database_url() -> str:
         path = BASE_DIR / url.removeprefix("sqlite:///./")
         path.parent.mkdir(parents=True, exist_ok=True)
         return f"sqlite:///{path.as_posix()}"
+    # Render supplies a generic postgresql:// URL. Explicitly select the
+    # installed psycopg v3 driver instead of SQLAlchemy's psycopg2 default.
+    if url.startswith("postgresql://"):
+        return "postgresql+psycopg://" + url.removeprefix("postgresql://")
+    if url.startswith("postgres://"):
+        return "postgresql+psycopg://" + url.removeprefix("postgres://")
     return url
 
 
