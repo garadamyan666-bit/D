@@ -1,0 +1,45 @@
+services:
+  - type: web
+    name: trade-analysis-bot
+    runtime: python
+    plan: free
+    region: frankfurt
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1
+    healthCheckPath: /healthz
+    autoDeployTrigger: commit
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.14
+      - key: DATABASE_URL
+        fromDatabase:
+          name: trade-analysis-db
+          property: connectionString
+      - key: PUBLIC_URL
+        fromService:
+          type: web
+          name: trade-analysis-bot
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_BOT_USERNAME
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: SCHEDULER_ENABLED
+        value: true
+      - key: TIMEFRAMES
+        value: M15,H1
+      - key: BINANCE_ENABLED
+        value: true
+
+databases:
+  - name: trade-analysis-db
+    plan: free
+    region: frankfurt
+    postgresMajorVersion: "18"
+    ipAllowList: []

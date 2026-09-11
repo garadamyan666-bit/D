@@ -1,0 +1,1 @@
+{"name":"Trade Analysis Bot","short_name":"Trade Analyze","description":"Binance market analysis and personal alerts","start_url":"/","scope":"/","display":"standalone","background_color":"#07100e","theme_color":"#07100e","icons":[{"src":"/static/icons/app-icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]}

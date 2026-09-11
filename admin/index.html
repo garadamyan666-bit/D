@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="hy">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Կանխատեսումների ստուգում</title>
+  <style>
+    :root{color-scheme:dark;--bg:#07100e;--panel:#0d1917;--line:#20332f;--text:#eef7f4;--muted:#91aaa3;--green:#36daa6;--red:#ff7189;--yellow:#ffd166}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px system-ui,sans-serif}main{width:min(1120px,100%);margin:auto;padding:26px 16px 60px}
+    a{color:var(--green);text-decoration:none}.top{display:flex;align-items:center;justify-content:space-between;gap:14px}.top h1{font-size:clamp(23px,5vw,34px);margin:22px 0 6px}.subtitle{color:var(--muted);margin:0 0 22px}
+    .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0}.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}.card span{color:var(--muted)}.card strong{display:block;font-size:32px;margin-top:7px}.card:first-child strong{color:var(--green)}
+    .toolbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin:20px 0}button{border:1px solid var(--line);background:#12231f;color:var(--text);border-radius:10px;padding:11px 15px;font-weight:700;cursor:pointer}button.active{background:var(--green);color:#042018;border-color:var(--green)}button.danger{margin-left:auto;color:#ff9eae;background:#2d151c;border-color:#66303d}button:disabled{opacity:.5;cursor:not-allowed}
+    .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:16px;background:var(--panel)}table{width:100%;border-collapse:collapse;min-width:760px}th,td{text-align:left;padding:15px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-size:13px}tbody tr:last-child td{border-bottom:0}.market{font-weight:750}.small{display:block;color:var(--muted);font-size:13px;margin-top:4px}.prediction{font-weight:800}.BUY{color:var(--green)}.SELL{color:var(--red)}
+    .result{display:inline-block;padding:7px 11px;border-radius:999px;font-weight:900}.CORRECT{color:var(--green);background:#0c3027}.INCORRECT{color:var(--red);background:#35151d}.PENDING{color:var(--yellow);background:#332b11}.FLAT,.EXCLUDED{color:var(--muted);background:#172421}.empty{text-align:center;color:var(--muted);padding:42px!important}#status{min-height:22px;color:var(--muted)}
+    @media(max-width:650px){.summary{grid-template-columns:1fr}.card{display:flex;align-items:center;justify-content:space-between}.card strong{margin:0}.top{align-items:flex-start;flex-direction:column}.danger{margin-left:0!important}}
+  </style>
+</head>
+<body><main>
+  <a href="/">← Վերադառնալ կայք</a>
+  <div class="top"><div><h1>Կանխատեսումների ստուգում</h1><p class="subtitle">Պարզ համեմատություն՝ ինչ էր կանխատեսվել և իրականում ինչ եղավ։</p></div><button id="logout">Դուրս գալ</button></div>
+
+  <section class="summary" aria-label="Ամփոփում">
+    <div class="card"><span>Ճշտություն</span><strong id="accuracy">—</strong></div>
+    <div class="card"><span>Ճիշտ կանխատեսումներ</span><strong id="correct">0</strong></div>
+    <div class="card"><span>Սխալ կանխատեսումներ</span><strong id="incorrect">0</strong></div>
+  </section>
+
+  <div class="toolbar">
+    <button class="filter active" data-timeframe="ALL">Բոլորը</button>
+    <button class="filter" data-timeframe="M15">M15 · 15 րոպե</button>
+    <button class="filter" data-timeframe="H1">H1 · 1 ժամ</button>
+    <button id="refresh">Թարմացնել</button>
+    <button id="reset" class="danger">Զրոյացնել պատմությունը</button>
+  </div>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>Երբ / շուկա</th><th>Կանխատեսումը</th><th>Իրական արդյունքը</th><th>Պատասխան</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table></div>
+  <p id="status" role="status"></p>
+
+<script>
+const $=id=>document.getElementById(id);let data=null,current='ALL';
+const number=value=>value==null?'—':Number(value).toLocaleString('hy-AM',{maximumFractionDigits:6});
+const prediction=signal=>signal.includes('BUY')?'Գնել':signal.includes('SELL')?'Վաճառել':'Սպասել';
+const direction=row=>{if(row.status==='PENDING')return 'Դեռ չի ստուգվել';if(row.end_price==null)return 'Տվյալ չկա';if(row.end_price>row.start_price)return 'Գինը բարձրացավ';if(row.end_price<row.start_price)return 'Գինը նվազեց';return 'Գինը չփոխվեց';};
+const verdict={CORRECT:'Ճիշտ',INCORRECT:'Սխալ',PENDING:'Սպասում',FLAT:'Չեզոք',EXCLUDED:'Չի հաշվարկվում'};
+function render(){
+  const group=current==='ALL'?data:data.by_timeframe[current];const rows=group?.rows||[];const counts=group?.counts||{};const evaluated=group?.evaluated||0;const accuracy=group?.accuracy_pct;
+  $('accuracy').textContent=accuracy==null?'—':number(accuracy)+'%';$('correct').textContent=counts.CORRECT||0;$('incorrect').textContent=counts.INCORRECT||0;
+  const body=$('rows');body.replaceChildren();
+  for(const row of rows){
+    const tr=document.createElement('tr');
+    const cells=[`<span class="market">${row.symbol} · ${row.timeframe}</span><span class="small">${new Date(row.issued_at).toLocaleString('hy-AM')}</span>`,`<span class="prediction ${row.signal.includes('BUY')?'BUY':row.signal.includes('SELL')?'SELL':''}">${prediction(row.signal)}</span><span class="small">Վստահություն՝ ${number(row.confidence)}%</span>`,`<strong>${direction(row)}</strong><span class="small">${number(row.start_price)} → ${number(row.end_price)}${row.change_pct==null?'':' · '+number(row.change_pct)+'%'}</span>`,`<span class="result ${row.status}">${verdict[row.status]||row.status}</span>`];
+    cells.forEach(html=>{const td=document.createElement('td');td.innerHTML=html;tr.append(td);});body.append(tr);
+  }
+  if(!rows.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=4;td.className='empty';td.textContent='Ստուգման տվյալներ դեռ չկան։';tr.append(td);body.append(tr);}
+  document.querySelectorAll('.filter').forEach(button=>button.classList.toggle('active',button.dataset.timeframe===current));
+}
+async function refresh(){try{const response=await fetch('/api/admin/verification',{cache:'no-store'});if(response.status===401){location.replace('/login?next=/admin');return;}if(!response.ok)throw Error('Տվյալները չբեռնվեցին։');data=await response.json();render();$('status').textContent='Թարմացված՝ '+new Date().toLocaleTimeString('hy-AM');}catch(error){$('status').textContent=error.message;}}
+document.querySelectorAll('.filter').forEach(button=>button.onclick=()=>{current=button.dataset.timeframe;render();});
+$('refresh').onclick=refresh;
+$('reset').onclick=async()=>{if(!confirm('Ջնջե՞լ կանխատեսումների ստուգման ամբողջ պատմությունը։ Այն հնարավոր չէ վերականգնել։'))return;const button=$('reset');button.disabled=true;try{const response=await fetch('/api/admin/verification?confirm=RESET',{method:'DELETE'});const result=await response.json();if(!response.ok)throw Error(result.detail||'Չհաջողվեց։');await refresh();$('status').textContent=`Պատմությունը զրոյացվեց․ ջնջվեց ${result.deleted} գրառում։`;}catch(error){$('status').textContent=error.message;}finally{button.disabled=false;}};
+$('logout').onclick=async()=>{await fetch('/api/auth/logout',{method:'POST'});location.replace('/login');};
+refresh();setInterval(refresh,10000);
+</script>
+</main></body></html>

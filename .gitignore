@@ -1,0 +1,13 @@
+.env
+admin-access.txt
+data/admin-auth.json
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+data/*.db
+data/*.db-*
+logs/*.log*
+.idea/
+.vscode/
