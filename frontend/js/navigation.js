@@ -11,9 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const heading=document.createElement('h2');heading.className='page-heading';heading.tabIndex=-1;
   const hint=document.createElement('p');hint.className='page-hint';
   const controls=main.querySelector('.controls');controls.before(heading,hint);
-  const flow=main.querySelector('.intelligence-grid');
-  const backtest=flow.lastElementChild;
-  const groups=[['analysis',[main.querySelector('#signal'),main.querySelector('.metrics')]],['levels',[main.querySelector('.grid')]],['flow',[flow]],['backtest',[backtest]],['alerts',[main.querySelector('.alert-panel')]],['leaders',[main.querySelector('.market-leaders')]],['history',[main.querySelector('.recent')]],['chart',[main.querySelector('.chart-upload')]]];
+  const groups=[['analysis',[main.querySelector('#signal'),main.querySelector('.metrics')]],['alerts',[main.querySelector('.alert-panel')]],['history',[main.querySelector('.recent')]]];
+  const wordIndexes=[0,4,6,8,9,10];
   const panels=new Map();const links=[];
   for(const [key,widgets] of groups){
     const panel=document.createElement('section');panel.className='workspace-panel';panel.dataset.page=key;panel.id='page-'+key;panel.hidden=true;
@@ -22,13 +21,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   for(const url of ['/account','/admin']){const link=document.createElement('a');link.href=url;if(url==='/admin')link.hidden=true;menu.append(link);links.push(link);}
   const logout=document.createElement('a');logout.href='#logout';menu.append(logout);links.push(logout);
-  fetch('/api/account').then(response=>response.json()).then(account=>{links[9].hidden=!account.is_admin;}).catch(()=>{});
+  fetch('/api/account').then(response=>response.json()).then(account=>{links[4].hidden=!account.is_admin;}).catch(()=>{});
   logout.addEventListener('click',async event=>{event.preventDefault();await fetch('/api/auth/logout',{method:'POST'});location.replace('/login');});
   let current='analysis';
   function render(){
     const lang=document.documentElement.lang;const words=dictionary[lang]||dictionary.hy;
-    menu.setAttribute('aria-label',words[14]);links.forEach((link,i)=>{link.textContent=words[i];if(i<8&&groups[i][0]===current)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');});
-    heading.textContent=words[groups.findIndex(([key])=>key===current)];
+    menu.setAttribute('aria-label',words[14]);links.forEach((link,i)=>{link.textContent=words[wordIndexes[i]];if(i<3&&groups[i][0]===current)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');});
+    heading.textContent=words[wordIndexes[groups.findIndex(([key])=>key===current)]];
     hint.textContent=current==='alerts'?words[12]:['flow','backtest'].includes(current)?words[13]:['analysis','levels'].includes(current)?words[11]:'';
     hint.hidden=!hint.textContent;
   }

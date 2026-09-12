@@ -102,9 +102,6 @@ let sourceSymbols = {};
 let lastAnalysis = null;
 let historyRows = [];
 let healthState = null;
-let intelligenceState = null;
-let backtestState = null;
-let leadersState = null;
 let alertStatusState = null;
 let alertRows = [];
 
@@ -133,9 +130,6 @@ function applyLanguage() {
   });
   renderHealth();
   if (lastAnalysis) renderAnalysis(lastAnalysis);
-  if (intelligenceState) renderIntelligence(intelligenceState);
-  if (backtestState) renderBacktest(backtestState);
-  if (leadersState) renderLeaders(leadersState);
   renderAlerts();
   renderHistory();
 }
@@ -177,71 +171,7 @@ function renderAnalysis(analysis) {
   put('rsi', analysis.rsi); put('macd', analysis.macd); put('atr', analysis.atr);
   $('macdSignal').textContent = `${t('signal')}: ${number(analysis.macd_signal)}`;
   $('volume').textContent = volumeLabels[currentLang][analysis.volume_status] || analysis.volume_status;
-  ['ema20','ema50','ema200','support','resistance','entry'].forEach(id => put(id, analysis[id]));
-  put('stop', analysis.stop_loss); put('target', analysis.take_profit);
-  $('rr').textContent = analysis.stop_loss ? `1 : ${analysis.risk_reward}` : '—';
-  $('risk').textContent = analysis.risk ? `$${number(analysis.risk.risk_amount)}` : '—';
-  $('reasons').innerHTML = (analysis.reasons || []).map(reason => `<li>${escapeHtml(translatePhrase(reason))}</li>`).join('') || `<li>${t('noConfirmations')}</li>`;
-  $('warnings').textContent = (analysis.warnings || []).map(warning => `⚠ ${translatePhrase(warning)}`).join('\n');
-}
 
-function renderIntelligence(data) {
-  intelligenceState = data;
-  const change = Number(data.price_change_24h_pct);
-  $('change24h').textContent = `${change >= 0 ? '+' : ''}${number(change)}%`;
-  $('change24h').className = change >= 0 ? 'positive' : 'negative';
-  $('volume24h').textContent = `$${compactNumber(data.quote_volume_24h)}`;
-  $('trades24h').textContent = compactNumber(data.trade_count_24h);
-  $('spread').textContent = `${number(data.spread_bps)} bps`;
-  const imbalance = Number(data.order_book_imbalance_pct);
-  $('orderImbalance').textContent = `${imbalance >= 0 ? '+' : ''}${number(imbalance)}%`;
-  $('orderImbalance').className = imbalance >= 0 ? 'positive' : 'negative';
-  $('bookPressure').textContent = pressureLabels[currentLang][data.order_book_pressure] || data.order_book_pressure;
-  $('takerRatio').textContent = `${number(data.taker_buy_ratio_pct)}%`;
-  $('flowPressure').textContent = pressureLabels[currentLang][data.trade_flow_pressure] || data.trade_flow_pressure;
-  const consensus = data.multi_timeframe;
-  $('consensus').textContent = pressureLabels[currentLang][consensus.consensus] || consensus.consensus;
-  $('consensusScore').textContent = `${number(consensus.average_score)} ${t('score')}`;
-  $('timeframeConsensus').innerHTML = consensus.timeframes.map(item => `<div class="timeframe-row"><strong>${escapeHtml(item.timeframe)}</strong><span class="tag ${cls(item.signal)}">${escapeHtml(signalLabels[currentLang][item.signal] || item.signal)}</span><span>${item.score}</span></div>`).join('');
-}
-
-function renderBacktest(data) {
-  backtestState = data;
-  $('testedTrades').textContent = number(data.trades);
-  $('winRate').textContent = `${number(data.win_rate_pct)}%`;
-  $('expectancy').textContent = number(data.expectancy_r);
-  $('profitFactor').textContent = data.profit_factor == null ? '—' : number(data.profit_factor);
-  $('maxDrawdown').textContent = number(data.max_drawdown_r);
-}
-
-function leaderRows(items, showVolume = false) {
-  return items.map(item => {
-    const change = Number(item.price_change_pct);
-    const secondary = showVolume ? `$${compactNumber(item.quote_volume)}` : `${change >= 0 ? '+' : ''}${number(change)}%`;
-    return `<div class="leader-row"><strong>${escapeHtml(item.symbol)}</strong><small>${number(item.last_price)}</small><span class="${change >= 0 ? 'positive' : 'negative'}">${secondary}</span></div>`;
-  }).join('');
-}
-
-function renderLeaders(data) {
-  leadersState = data;
-  $('topVolume').innerHTML = leaderRows(data.top_volume, true);
-  $('topGainers').innerHTML = leaderRows(data.top_gainers);
-  $('topLosers').innerHTML = leaderRows(data.top_losers);
-}
-
-async function loadAdvanced(symbol, timeframe) {
-  const [intelligence, backtest] = await Promise.allSettled([
-    json(`/api/intelligence/binance/${encodeURIComponent(symbol)}`),
-    json(`/api/backtest/binance/${encodeURIComponent(symbol)}/${encodeURIComponent(timeframe)}?horizon_bars=12&max_trades=60&cost_bps=10`)
-  ]);
-  if (intelligence.status === 'fulfilled') renderIntelligence(intelligence.value);
-  if (backtest.status === 'fulfilled') renderBacktest(backtest.value);
-  if (intelligence.status === 'rejected' && backtest.status === 'rejected') $('message').textContent = intelligence.reason.message;
-}
-
-async function loadLeaders() {
-  try { renderLeaders(await json('/api/markets/binance/leaders?limit=8')); }
-  catch (error) { console.error(error); }
 }
 
 function renderHistory() {
@@ -315,7 +245,6 @@ async function analyze() {
     const analysis = await json(`/api/analyze/${encodeURIComponent(source)}/${encodeURIComponent($('symbol').value)}/${encodeURIComponent($('timeframe').value)}`);
     renderAnalysis(analysis);
     $('message').textContent = '';
-    if (source === 'BINANCE') await loadAdvanced(analysis.symbol, analysis.timeframe);
     await loadHistory();
     await loadAlerts();
   } catch (error) { $('message').textContent = error.message; }
@@ -338,7 +267,6 @@ async function boot() {
     $('timeframe').value = config.default_timeframe;
     await loadHistory();
     await loadAlerts();
-    if (sourceSymbols.BINANCE) loadLeaders();
   } catch (error) { $('message').textContent = error.message; }
 }
 

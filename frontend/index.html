@@ -4,7 +4,6 @@
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Առևտրի վերլուծության բոտ</title><meta name="theme-color" content="#07100e"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Trade Analyze"><link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/static/icons/app-icon.svg"><link rel="stylesheet" href="/static/css/style.css?v=20260905-alerts1">
 <link rel="stylesheet" href="/static/css/navigation.css?v=1">
-<link rel="stylesheet" href="/static/css/chart-analysis.css?v=1">
 </head>
 <body>
   <header><div><p class="eyebrow" data-i18n="brandEyebrow">ՇՈՒԿԱՅԻ ՎԵՐԼՈՒԾՈՒԹՅՈՒՆ</p><h1 data-i18n="brandTitle">Առևտրի վերլուծության բոտ</h1></div><div class="header-actions"><div class="language-switch" aria-label="Language"><button type="button" data-lang="hy">AM</button><button type="button" data-lang="ru">RU</button><button type="button" data-lang="en">EN</button></div><div id="status" class="status" data-i18n="checking">● Կապի ստուգում</div></div></header>
@@ -20,34 +19,9 @@
       <article class="card"><span>ATR 14</span><strong id="atr">—</strong><small data-i18n="volatility">Տատանողականություն</small></article>
       <article class="card"><span data-i18n="volume">Ծավալ</span><strong id="volume">—</strong><small data-i18n="volumeNote">20 շրջանի միջինի համեմատ</small></article>
     </section>
-    <section class="intelligence-grid">
-      <article class="card"><h3 data-i18n="marketFlow">Շուկայի հոսք և խորություն</h3><dl><div><dt data-i18n="change24h">24ժ փոփոխություն</dt><dd id="change24h">—</dd></div><div><dt data-i18n="volume24h">24ժ շրջանառություն</dt><dd id="volume24h">—</dd></div><div><dt data-i18n="trades24h">24ժ գործարքների քանակ</dt><dd id="trades24h">—</dd></div><div><dt data-i18n="spread">Bid/Ask spread</dt><dd id="spread">—</dd></div></dl></article>
-      <article class="card"><h3 data-i18n="buySellPressure">Գնման / վաճառքի ճնշում</h3><dl><div><dt data-i18n="orderImbalance">Order book անհավասարակշռություն</dt><dd id="orderImbalance">—</dd></div><div><dt data-i18n="bookPressure">Order book ուղղություն</dt><dd id="bookPressure">—</dd></div><div><dt data-i18n="takerRatio">Ագրեսիվ գնումների բաժին</dt><dd id="takerRatio">—</dd></div><div><dt data-i18n="flowPressure">Trade flow ուղղություն</dt><dd id="flowPressure">—</dd></div></dl><p class="data-note" data-i18n="aggregateNote">Տվյալները ընդհանուր շուկայական հոսք են, ոչ թե գնորդների ինքնություն։</p></article>
-      <article class="card"><h3 data-i18n="multiTimeframe">Մի քանի ժամանակահատվածի համընկնում</h3><div class="consensus"><strong id="consensus">—</strong><span id="consensusScore">—</span></div><div id="timeframeConsensus" class="timeframe-list"><span>—</span></div></article>
-      <article class="card"><h3 data-i18n="backtest">Պատմական փորձարկում</h3><dl><div><dt data-i18n="testedTrades">Փորձարկված ազդանշաններ</dt><dd id="testedTrades">—</dd></div><div><dt data-i18n="winRate">Հաղթող տոկոս</dt><dd id="winRate">—</dd></div><div><dt data-i18n="expectancy">Միջին արդյունք (R)</dt><dd id="expectancy">—</dd></div><div><dt>Profit factor</dt><dd id="profitFactor">—</dd></div><div><dt data-i18n="maxDrawdown">Առավելագույն անկում (R)</dt><dd id="maxDrawdown">—</dd></div></dl><p class="data-note" data-i18n="hypotheticalNote">Backtest-ը ենթադրական է և ապագա արդյունք չի երաշխավորում։</p></article>
-    </section>
-    <section class="grid">
-      <article class="card"><h3 data-i18n="structure">Շուկայի կառուցվածք</h3><dl><div><dt>EMA 20</dt><dd id="ema20">—</dd></div><div><dt>EMA 50</dt><dd id="ema50">—</dd></div><div><dt>EMA 200</dt><dd id="ema200">—</dd></div><div><dt data-i18n="support">Աջակցություն</dt><dd id="support">—</dd></div><div><dt data-i18n="resistance">Դիմադրություն</dt><dd id="resistance">—</dd></div></dl></article>
-      <article class="card"><h3 data-i18n="setup">Առաջարկվող կարգավորումներ</h3><dl><div><dt data-i18n="entry">Մուտքի գին</dt><dd id="entry">—</dd></div><div><dt data-i18n="stop">Կորուստի սահման (SL)</dt><dd id="stop">—</dd></div><div><dt data-i18n="target">Շահույթի թիրախ (TP)</dt><dd id="target">—</dd></div><div><dt data-i18n="riskReward">Ռիսկ / եկամուտ</dt><dd id="rr">—</dd></div><div><dt data-i18n="theoreticalRisk">Տեսական ռիսկ</dt><dd id="risk">—</dd></div></dl></article>
-      <article class="card"><h3 data-i18n="rationale">Վերլուծության հիմնավորումներ</h3><ul id="reasons"><li data-i18n="noAnalysis">Վերլուծություն դեռ չի կատարվել։</li></ul><div id="warnings"></div></article>
-    </section>
-    <section class="card market-leaders"><div class="section-title"><h3 data-i18n="marketLeaders">Binance շուկայի առաջատարներ</h3><span data-i18n="leadersNote">USDT զույգեր՝ նվազագույն շրջանառության զտիչով</span></div><div class="leader-grid"><div><h4 data-i18n="topVolume">Ամենաշատ շրջանառվող</h4><div id="topVolume" class="leader-list">—</div></div><div><h4 data-i18n="topGainers">Ամենաշատ աճող</h4><div id="topGainers" class="leader-list">—</div></div><div><h4 data-i18n="topLosers">Ամենաշատ նվազող</h4><div id="topLosers" class="leader-list">—</div></div></div></section>
-    <section class="card chart-upload">
-      <div class="section-title"><div><h3>Գրաֆիկի նկարով վերլուծություն</h3><span>Վերբեռնեք հստակ candlestick screenshot՝ գներով և ժամանակահատվածով։</span></div></div>
-      <div class="chart-form">
-        <label>Շուկա<input id="chartSymbol" type="text" maxlength="32" placeholder="Օրինակ՝ BTCUSDT"></label>
-        <label>Ժամանակահատված<select id="chartTimeframe"><option value="M15">M15</option><option value="H1">H1</option><option value="H4">H4</option><option value="D1">D1</option></select></label>
-        <label class="file-label">Գրաֆիկի նկարը<input id="chartImage" type="file" accept="image/png,image/jpeg,image/webp"></label>
-        <button id="analyzeChart">Վերլուծել նկարը</button>
-      </div>
-      <img id="chartPreview" class="chart-preview" alt="Ընտրված գրաֆիկ" hidden>
-      <p id="chartMessage" class="data-note">Նկարը չի պահպանվում կայքի բազայում։ Պատասխանը սցենար է, ոչ երաշխիք։</p>
-      <pre id="chartResult" class="chart-result" hidden></pre>
-    </section>
     <section class="card recent"><div class="section-title"><h3 data-i18n="recent">Վերջին վերլուծությունները</h3><span data-i18n="refresh">Թարմացվում է յուրաքանչյուր 30 վայրկյանը մեկ</span></div><div class="table-wrap"><table><thead><tr><th data-i18n="time">Ժամանակ</th><th data-i18n="market">Շուկա</th><th data-i18n="signal">Ազդանշան</th><th data-i18n="confidenceTitle">Վստահություն</th><th data-i18n="price">Գին</th></tr></thead><tbody id="history"></tbody></table></div></section>
   </main>
-  <script defer src="/static/js/navigation.js?v=1"></script>
-  <script defer src="/static/js/chart-analysis.js?v=1"></script>
+  <script defer src="/static/js/navigation.js?v=2"></script>
   <script defer src="/static/js/pwa.js?v=1"></script>
-  <script defer src="/static/js/app.js?v=20260906-menu1"></script>
+  <script defer src="/static/js/app.js?v=20260912-lite"></script>
 </body></html>
