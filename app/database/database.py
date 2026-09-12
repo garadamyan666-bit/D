@@ -4,7 +4,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from pathlib import Path
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 from app.config import BASE_DIR, settings
@@ -36,6 +36,13 @@ SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 def init_db() -> None:
     from app.database import models  # noqa: F401
     Base.metadata.create_all(bind=engine)
+    # Additive migration: old forecasts remain readable, never fabricate outcomes.
+    columns = {c['name']: c for c in inspect(engine).get_columns('forecast_checks')}
+    with engine.begin() as connection:
+        if 'evaluation' not in columns:
+            connection.execute(text('ALTER TABLE forecast_checks ADD COLUMN evaluation TEXT'))
+        if engine.dialect.name == 'postgresql' and str(columns['target_ms']['type']) != 'BIGINT':
+            connection.execute(text('ALTER TABLE forecast_checks ALTER COLUMN target_ms TYPE BIGINT'))
 
 
 @contextmanager

@@ -30,3 +30,11 @@ def test_backtest_rejects_short_history():
         assert False, "Expected ValueError"
     except ValueError as exc:
         assert "240 candles" in str(exc)
+
+
+def test_missing_confirmation_never_fakes_live_strategy():
+    result = backtest_frame(trending_frame(), 'BTCUSDT', 'M15')
+    assert result['trades'] == 0
+    assert result['evaluation'] == 'chronological_holdout'
+    assert result['holdout_start_index'] == 294
+    assert result['non_overlapping']

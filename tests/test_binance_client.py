@@ -3,6 +3,43 @@ import pytest
 from app.core.binance_client import BinanceClient, BinanceError
 
 
+@pytest.fixture(autouse=True)
+def isolated_state(monkeypatch):
+    monkeypatch.setattr(BinanceClient, '_cache', {})
+    monkeypatch.setattr(BinanceClient, '_blocked_until', 0)
+    monkeypatch.setattr(BinanceClient, '_last_request', 0)
+    monkeypatch.setattr(BinanceClient, '_saved_pause', staticmethod(lambda value=None: 0))
+
+
+@pytest.mark.parametrize('status', [418, 429])
+def test_exchange_pause_stops_all_clients_and_failover(monkeypatch, status):
+    calls = []
+    def request(*args, **kwargs):
+        calls.append(args)
+        response = FakeResponse({}, status)
+        response.headers = {'Retry-After': '120'}
+        return response
+    first = BinanceClient(['https://one.test', 'https://two.test'])
+    monkeypatch.setattr(first.session, 'get', request)
+    with pytest.raises(BinanceError, match='paused'):
+        first._get('/api/v3/ping')
+    second = BinanceClient(['https://three.test'])
+    monkeypatch.setattr(second.session, 'get', lambda *a, **k: pytest.fail('Must not retry'))
+    with pytest.raises(BinanceError, match='paused'):
+        second._get('/api/v3/ping')
+    assert len(calls) == 1
+    assert 119 <= first.retry_after_seconds() <= 121
+
+
+def test_cache_shared_and_copied(monkeypatch):
+    first = BinanceClient(['https://cache.test'])
+    monkeypatch.setattr(first.session, 'get', lambda *a, **k: FakeResponse({'price':'100'}))
+    first._get('/api/v3/ticker/price')['price'] = 'wrong'
+    second = BinanceClient(['https://cache.test'])
+    monkeypatch.setattr(second.session, 'get', lambda *a, **k: pytest.fail('Cache expected'))
+    assert second._get('/api/v3/ticker/price')['price'] == '100'
+
+
 class FakeResponse:
     def __init__(self, payload, status=200):
         self.payload = payload

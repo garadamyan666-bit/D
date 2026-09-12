@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, Float, Integer, String, Text, UniqueConstraint
+from sqlalchemy import BigInteger, Boolean, DateTime, Float, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database.database import Base
@@ -71,12 +71,13 @@ class ForecastCheck(Base):
     confidence: Mapped[float] = mapped_column(Float)
     start_price: Mapped[float] = mapped_column(Float)
     issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    target_ms: Mapped[int] = mapped_column(Integer, index=True)
+    target_ms: Mapped[int] = mapped_column(BigInteger, index=True)
     status: Mapped[str] = mapped_column(String(16), index=True)
     end_price: Mapped[float | None] = mapped_column(Float, nullable=True)
     change_pct: Mapped[float | None] = mapped_column(Float, nullable=True)
     checked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    evaluation: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class User(Base):

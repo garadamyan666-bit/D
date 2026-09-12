@@ -84,6 +84,38 @@ def test_admin_role_check():
         assert client.delete('/api/admin/verification?confirm=RESET').status_code == 401
 
 
+def test_paper_path_is_complete_and_starts_after_issue(tmp_path, monkeypatch):
+    import json
+    from contextlib import contextmanager
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import Session
+    from app.database.models import ForecastCheck
+    import app.services.verification as service
+    engine = create_engine('sqlite:///' + str(tmp_path / 'paper.db'))
+    ForecastCheck.__table__.create(engine)
+    @contextmanager
+    def scope():
+        with Session(engine) as session:
+            yield session
+            session.commit()
+    monkeypatch.setattr(service, 'session_scope', scope)
+    issued = datetime(2026,1,1,0,0,25,tzinfo=timezone.utc)
+    with scope() as session:
+        row = make_check(dict(market_source='BINANCE',symbol='BTCUSDT',timeframe='M1',signal='BUY',confidence=80,current_price=100,stop_loss=99,take_profit=102), issued)
+        end = row.target_ms
+        session.add(row)
+    def get(path, params):
+        assert params['startTime'] == end - 59999
+        return [[end-59999,100,100.2,99.8,100.1,0,end]]
+    monkeypatch.setattr(service.client, '_get', get)
+    service.verify_pending()
+    with scope() as session:
+        row = session.get(ForecastCheck,1)
+        assert row.status == 'CORRECT'
+        assert json.loads(row.evaluation)['net_pct'] == pytest.approx(-0.15)
+    engine.dispose()
+
+
 def test_admin_can_reset_verification_history():
     from sqlalchemy import select
     from app.database.database import session_scope

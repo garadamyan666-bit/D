@@ -116,6 +116,7 @@ const translatePhrase = phrase => phraseLabels[currentLang][phrase] || phrase;
 function renderHealth() {
   if (!healthState) return;
   $('status').textContent = `● Binance՝ ${healthState.binance_connected ? t('connected') + ' ✓' : t('disconnected') + ' ✕'}`;
+  if (healthState.retry_after_seconds > 0) $('status').textContent += ` · ${Math.ceil(healthState.retry_after_seconds / 60)} min`;
   $('status').classList.toggle('on', healthState.binance_connected);
 }
 

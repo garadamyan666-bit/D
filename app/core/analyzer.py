@@ -76,6 +76,8 @@ class Analyzer:
         setup = calculate_trade_levels(direction, price, indicators["atr"], levels["nearest_support"], levels["nearest_resistance"], settings.atr_multiplier, settings.risk_reward)
         risk = calculate_risk(account_balance or settings.account_balance, risk_percent or settings.risk_percent,
                               price, setup["stop_loss"], setup["take_profit"], settings.max_daily_risk)
+        # Forecast starts after data retrieval, never before a slow request.
+        now = datetime.now(timezone.utc)
         result: dict[str, Any] = {
             "symbol": symbol.upper(), "broker_symbol": frame.attrs.get("resolved_symbol", symbol), "market_source": self.source, "timeframe": timeframe.upper(), "timestamp": now.isoformat(),
             "current_price": price, "signal": scoring["signal"], "score": scoring["score"], "confidence": scoring["confidence"],

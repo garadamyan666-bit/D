@@ -20,7 +20,7 @@
   <div class="top"><div><h1>Կանխատեսումների ստուգում</h1><p class="subtitle">Պարզ համեմատություն՝ ինչ էր կանխատեսվել և իրականում ինչ եղավ։</p></div><button id="logout">Դուրս գալ</button></div>
 
   <section class="summary" aria-label="Ամփոփում">
-    <div class="card"><span>Ճշտություն</span><strong id="accuracy">—</strong></div>
+    <div class="card"><span>Ուղղության ճշտություն (ոչ շահույթ)</span><strong id="accuracy">—</strong></div>
     <div class="card"><span>Ճիշտ կանխատեսումներ</span><strong id="correct">0</strong></div>
     <div class="card"><span>Սխալ կանխատեսումներ</span><strong id="incorrect">0</strong></div>
   </section>
@@ -34,10 +34,14 @@
   </div>
 
   <div class="table-wrap"><table>
-    <thead><tr><th>Երբ / շուկա</th><th>Կանխատեսումը</th><th>Իրական արդյունքը</th><th>Պատասխան</th></tr></thead>
+    <thead><tr><th>Երբ / շուկա</th><th>Կանխատեսումը</th><th>Իրական արդյունքը</th><th>Պատասխան</th><th>Փորձնական գործարք՝ ծախսերից հետո</th></tr></thead>
     <tbody id="rows"></tbody>
   </table></div>
   <p id="status" role="status"></p>
+  <h2>Հին և նոր կանոնների փորձնական համեմատություն</h2>
+  <p class="subtitle">Նոր կանոնները դեռ չեն փոխարինում գործող ազդանշաններին։ Հաշվում ենք միայն հրապարակումից հետո ստացված, չհամընկնող փորձերը՝ ըստ շուկայի և ժամանակահատվածի։ 100 փորձն անգամ երաշխիք չէ։</p>
+  <p class="subtitle">Պայմանական մուտք՝ հաջորդ ամբողջ րոպեի բացման գնով։ Ծախս՝ 0.25% ընդհանուր։ Սա իրական կատարում չէ։ Մի մոմում և՛ SL, և՛ TP լինելու դեպքում արդյունքն անորոշ է։ Հին գրառումների համար բացակայող տվյալներ չենք հորինում։ SELL-ը միայն պայմանական կարճ դիրքի հաշվարկ է, ոչ Binance Spot վաճառքի հրահանգ։</p>
+  <div id="comparison" class="card"></div>
 
 <script>
 const $=id=>document.getElementById(id);let data=null,current='ALL';
@@ -52,9 +56,16 @@ function render(){
   for(const row of rows){
     const tr=document.createElement('tr');
     const cells=[`<span class="market">${row.symbol} · ${row.timeframe}</span><span class="small">${new Date(row.issued_at).toLocaleString('hy-AM')}</span>`,`<span class="prediction ${row.signal.includes('BUY')?'BUY':row.signal.includes('SELL')?'SELL':''}">${prediction(row.signal)}</span><span class="small">Վստահություն՝ ${number(row.confidence)}%</span>`,`<strong>${direction(row)}</strong><span class="small">${number(row.start_price)} → ${number(row.end_price)}${row.change_pct==null?'':' · '+number(row.change_pct)+'%'}</span>`,`<span class="result ${row.status}">${verdict[row.status]||row.status}</span>`];
-    cells.forEach(html=>{const td=document.createElement('td');td.innerHTML=html;tr.append(td);});body.append(tr);
+    cells.forEach(html=>{const td=document.createElement('td');td.innerHTML=html;tr.append(td);});
+    const paper=document.createElement('td'),ev=row.evaluation;
+    const labels={PENDING:'Սպասում',AMBIGUOUS:'Անորոշ՝ SL և TP նույն մոմում',ENTRY_OUTSIDE_LEVELS:'Մուտքը դուրս էր սահմաններից',TP:'Շահույթի սահման',SL:'Կորստի սահման',HORIZON:'Ժամանակն ավարտվեց'};
+    paper.textContent=ev?(labels[ev.paper_status]||ev.paper_status)+(ev.net_pct==null?'':` · ${number(ev.net_pct)}% · ${ev.profitable?'Շահույթ':'Շահույթ չկա'}`):'Հին գրառում / գործարք չկա';tr.append(paper);body.append(tr);
   }
-  if(!rows.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=4;td.className='empty';td.textContent='Ստուգման տվյալներ դեռ չկան։';tr.append(td);body.append(tr);}
+  if(!rows.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=5;td.className='empty';td.textContent='Ստուգման տվյալներ դեռ չկան։';tr.append(td);body.append(tr);}
+  $('comparison').replaceChildren();
+  const comparisons=(data.comparison||[]).filter(x=>current==='ALL'||x.timeframe===current);
+  if(!comparisons.length)$('comparison').textContent='Նոր ստուգված փորձեր դեռ չկան։';
+  comparisons.forEach(x=>{const p=document.createElement('p');p.textContent=`${x.symbol} · ${x.timeframe} · ${x.version==='cost-filter-v2'?'Նոր՝ ծախսերի ֆիլտր':'Գործող կանոններ'} — ${x.samples} փորձ, շահութաբեր՝ ${number(x.profitable_pct)}%, միջին արդյունք՝ ${number(x.mean_net_pct)}%${x.enough_data?'':' · Տվյալները քիչ են'}`;$('comparison').append(p);});
   document.querySelectorAll('.filter').forEach(button=>button.classList.toggle('active',button.dataset.timeframe===current));
 }
 async function refresh(){try{const response=await fetch('/api/admin/verification',{cache:'no-store'});if(response.status===401){location.replace('/login?next=/admin');return;}if(!response.ok)throw Error('Տվյալները չբեռնվեցին։');data=await response.json();render();$('status').textContent='Թարմացված՝ '+new Date().toLocaleTimeString('hy-AM');}catch(error){$('status').textContent=error.message;}}

@@ -69,8 +69,11 @@ def test_frontend_assets_and_source_selector(monkeypatch):
         assert css.status_code == 200 and css.headers["content-type"].startswith("text/css")
         assert javascript.status_code == 200 and "sourceSymbols" in javascript.text
         assert "loadAlerts" in javascript.text
-        assert 'id="chartImage"' in page.text
-        assert client.get("/static/js/chart-analysis.js").status_code == 200
+        assert 'id="chartImage"' not in page.text
+        assert 'chart-analysis.js' not in page.text
+        assert '/api/intelligence/' not in javascript.text
+        assert '/api/backtest/' not in javascript.text
+        assert '/api/markets/binance/leaders' not in javascript.text
         manifest = client.get("/manifest.webmanifest")
         worker = client.get("/sw.js")
         assert manifest.status_code == 200 and manifest.json()["display"] == "standalone"

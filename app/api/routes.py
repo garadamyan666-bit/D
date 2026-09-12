@@ -10,6 +10,8 @@ from sqlalchemy import desc, func, select
 
 from app.config import settings
 from app.core.analyzer import binance_analyzer
+from app.core.analyzer import closed_candles, CONFIRMATION_TIMEFRAME
+from datetime import datetime, timezone
 from app.core.binance_client import BinanceError, binance_client
 from app.core.backtester import backtest_frame
 from app.core.market_intelligence import build_market_intelligence, market_leaders
@@ -48,7 +50,8 @@ def _validate(symbol: str, timeframe: str, source: str = "BINANCE") -> tuple[str
 
 @router.get("/health")
 def health() -> dict:
-    return {"status": "ok", "binance_connected": binance_client.is_connected(), "analysis_only": True}
+    return {"status": "ok", "binance_connected": binance_client.is_connected(),
+            "retry_after_seconds": binance_client.retry_after_seconds(), "analysis_only": True}
 
 
 @router.get("/symbols")
@@ -97,11 +100,14 @@ def binance_market_leaders(limit: int = Query(10, ge=3, le=25)) -> dict:
 
 
 @router.get("/backtest/binance/{symbol}/{timeframe}")
-def binance_backtest(symbol: str, timeframe: str, horizon_bars: int = Query(12, ge=1, le=100), max_trades: int = Query(80, ge=10, le=200), cost_bps: float = Query(10, ge=0, le=100)) -> dict:
+def binance_backtest(symbol: str, timeframe: str, horizon_bars: int = Query(12, ge=1, le=100), max_trades: int = Query(80, ge=10, le=200), cost_bps: float = Query(25, ge=0, le=100)) -> dict:
     _, symbol, timeframe = _validate(symbol, timeframe, "BINANCE")
     try:
-        candles = binance_client.get_candles(symbol, timeframe, 1000)
-        return backtest_frame(candles, symbol, timeframe, horizon_bars, max_trades, cost_bps)
+        now = datetime.now(timezone.utc)
+        candles = closed_candles(binance_client.get_candles(symbol, timeframe, 1000), now)
+        higher_tf = CONFIRMATION_TIMEFRAME.get(timeframe)
+        higher = closed_candles(binance_client.get_candles(symbol, higher_tf, 1000), now) if higher_tf else None
+        return backtest_frame(candles, symbol, timeframe, horizon_bars, max_trades, cost_bps, higher_frame=higher)
     except (BinanceError, ValueError) as exc:
         raise HTTPException(503, str(exc)) from exc
 

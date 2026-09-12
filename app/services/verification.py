@@ -2,6 +2,8 @@
 from datetime import datetime, timedelta, timezone
 import logging
 import math
+import json
+from app.core.paper_evaluation import snapshot, evaluate
 from sqlalchemy import select
 from app.core.binance_client import BinanceClient
 from app.database.database import session_scope
@@ -21,7 +23,7 @@ def make_check(item, now, user_id=None):
     end_ms = (math.floor(target.timestamp() / 60) + 1) * 60000 - 1
     return ForecastCheck(user_id=user_id, symbol=item['symbol'], timeframe=item['timeframe'],
         signal=item['signal'], confidence=item['confidence'], start_price=item['current_price'],
-        issued_at=now, target_ms=end_ms,
+        issued_at=now, target_ms=end_ms, evaluation=json.dumps(snapshot(item)),
         status='EXCLUDED' if item['signal'] == 'WAIT' else 'PENDING')
 
 
@@ -53,6 +55,20 @@ def verify_pending():
                 row = session.get(ForecastCheck, row_id)
                 if row is None or row.status != 'PENDING':
                     continue
+                frozen = json.loads(row.evaluation or 'null')
+                if frozen:
+                    issued = row.issued_at.replace(tzinfo=timezone.utc)
+                    first_ms = (int(issued.timestamp() // 60) + 1) * 60000
+                    candles = []
+                    for start in range(first_ms, end_ms, 1000 * 60000):
+                        batch = client._get('/api/v3/klines', {'symbol': symbol, 'interval': '1m',
+                            'startTime': start, 'endTime': end_ms, 'limit': 1000})
+                        candles.extend(batch)
+                    expected = list(range(first_ms, end_ms, 60000))
+                    if [int(c[0]) for c in candles] != expected or any(int(c[6]) != int(c[0])+59999 for c in candles):
+                        raise ValueError('Incomplete paper candle path')
+                    frozen.update(evaluate(row.signal, frozen, candles))
+                    row.evaluation = json.dumps(frozen)
                 row.change_pct, row.status = result_for(row.signal, row.start_price, cache[key])
                 row.end_price = cache[key]
                 row.checked_at = datetime.now(timezone.utc)
