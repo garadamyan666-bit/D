@@ -70,7 +70,7 @@ async def development_cache_control(request, call_next):
 def dashboard(request: Request):
     try: current_user(request)
     except HTTPException: return RedirectResponse("/login", status_code=303)
-    return FileResponse(BASE_DIR / "frontend" / "index.html")
+    return FileResponse(BASE_DIR / 'frontend' / ('pocket.html' if settings.active_workspace == 'POCKET_OPTION' else 'index.html'))
 
 
 @app.get("/account", include_in_schema=False)

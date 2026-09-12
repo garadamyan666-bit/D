@@ -12,6 +12,7 @@ from app.config import settings
 from app.core.analyzer import binance_analyzer
 from app.core.analyzer import closed_candles, CONFIRMATION_TIMEFRAME
 from datetime import datetime, timezone
+from typing import Literal
 from app.core.binance_client import BinanceError, binance_client
 from app.core.backtester import backtest_frame
 from app.core.market_intelligence import build_market_intelligence, market_leaders
@@ -33,6 +34,10 @@ class ChartAnalysisRequest(BaseModel):
     image_data: str = Field(min_length=100, max_length=7_500_000)
     symbol: str = Field(default="", max_length=32)
     timeframe: str = Field(default="", max_length=8)
+    expiry_minutes: int = Field(default=5, ge=1, le=60)
+    language: Literal['hy', 'ru', 'en'] = 'hy'
+    market_type: Literal['OTC', 'REGULAR'] = 'OTC'
+    consent: bool = False
 
 
 def _validate(symbol: str, timeframe: str, source: str = "BINANCE") -> tuple[str, str, str]:
@@ -52,6 +57,13 @@ def _validate(symbol: str, timeframe: str, source: str = "BINANCE") -> tuple[str
 def health() -> dict:
     return {"status": "ok", "binance_connected": binance_client.is_connected(),
             "retry_after_seconds": binance_client.retry_after_seconds(), "analysis_only": True}
+
+
+@router.get('/workspace')
+def workspace():
+    return {'workspace': settings.active_workspace,
+            'binance_paused': settings.active_workspace == 'POCKET_OPTION' or not settings.binance_enabled,
+            'vision_configured': bool(settings.openai_api_key), 'pocket_live_connected': False}
 
 
 @router.get("/symbols")
@@ -118,10 +130,14 @@ def chart_analysis(payload: ChartAnalysisRequest, request: Request) -> dict:
     rate_limit(request, "chart-analysis", 10, 3600)
     symbol = payload.symbol.strip().upper()
     timeframe = payload.timeframe.strip().upper()
-    if timeframe and timeframe not in {"M15", "H1", "H4", "D1"}:
-        raise HTTPException(400, "Ընտրեք M15, H1, H4 կամ D1 ժամանակահատված։")
+    if not payload.consent:
+        raise HTTPException(400, 'Confirm image transfer to OpenAI first')
+    if timeframe not in {'M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1'}:
+        raise HTTPException(400, 'Select the chart candle timeframe')
     try:
-        return {"analysis": analyze_chart(payload.image_data, symbol, timeframe), "stored": False}
+        return {"analysis": analyze_chart(payload.image_data, symbol, timeframe, payload.expiry_minutes, payload.language, payload.market_type),
+                "stored": False, "source": 'POCKET_OPTION_SCREENSHOT', 'live_data': False,
+                "created_at": datetime.now(timezone.utc).isoformat()}
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
     except ChartVisionError as exc:

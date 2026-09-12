@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="hy"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Pocket Option · Chart Review</title><link rel="stylesheet" href="/static/css/style.css"><link rel="manifest" href="/manifest.webmanifest"><style>
+main{max-width:850px;margin:auto;padding:18px}nav{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:22px}nav a{color:#31d9a4}.pocket-form{display:grid;grid-template-columns:1fr 1fr;gap:16px}label{display:grid;gap:8px}input,select{width:100%;padding:12px;background:#07100e;color:#fff;border:1px solid #344b45;border-radius:9px}.wide{grid-column:1/-1}.consent{display:flex;align-items:flex-start}.consent input{width:auto;margin-top:5px}#preview{max-width:100%;max-height:420px;object-fit:contain}#answer{white-space:pre-wrap;line-height:1.7}button:disabled{opacity:.5}#notice{margin:15px 0;color:#ffd166}.muted{color:#a7bcb5;line-height:1.6}header{gap:15px;flex-wrap:wrap}@media(max-width:550px){.pocket-form{grid-template-columns:1fr}header h1{font-size:25px}}</style></head>
+<body><header><div><p class="eyebrow">POCKET OPTION · SCREENSHOT</p><h1 data-text="title">Նկարի պարզ վերլուծություն</h1></div><select id="language" aria-label="Language"><option value="hy">Հայերեն</option><option value="ru">Русский</option><option value="en">English</option></select></header>
+<main><nav><a href="/account" data-text="account">Իմ հաշիվը</a><a href="/admin" id="adminLink" hidden data-text="admin">Ադմին · Binance-ի հին ստուգումներ</a><button id="logout" class="secondary" data-text="logout">Դուրս գալ</button></nav>
+<p class="safety" data-text="safety">ՄԻԱՅՆ ՎԵՐԼՈՒԾՈՒԹՅՈՒՆ · ԱՎՏՈՄԱՏ ԳՈՐԾԱՐՔՆԵՐ ՉԿԱՆ</p>
+<p class="muted" data-text="intro">1. Ներբեռնեք գրաֆիկի նոր նկարը։ 2. Նշեք տվյալները։ 3. Ստացեք պարզ բացատրություն։</p>
+<p id="notice" role="status" aria-live="polite"></p>
+<form id="chartForm" class="card pocket-form">
+<label class="wide"><span data-text="image">Գրաֆիկի նկար՝ PNG / JPG / WEBP, մինչև 5 MB</span><input id="chartImage" type="file" accept="image/png,image/jpeg,image/webp" required></label>
+<img id="preview" class="wide" alt="Chart preview" hidden>
+<label><span data-text="market">Շուկա՝ ինչպես գրված է նկարում</span><input id="market" maxlength="32" placeholder="EUR/USD OTC" required></label>
+<label><span data-text="type">Շուկայի տեսակ</span><select id="marketType"><option>OTC</option><option value="REGULAR">Regular</option></select></label>
+<label><span data-text="timeframe">Մեկ մոմի ժամանակը</span><select id="candleTime"><option>M1</option><option>M5</option><option>M15</option><option>M30</option><option>H1</option></select></label>
+<label><span data-text="expiry">Գործարքի նախատեսված տևողությունը՝ րոպե</span><input id="expiry" type="number" min="1" max="60" value="5" required></label>
+<label class="wide consent"><input id="consent" type="checkbox" required><span data-text="consent">Համաձայն եմ նկարը ուղարկել OpenAI-ին։ Նախ կտրել եմ անձնական տվյալները։ Նկարը մեր բազայում չի պահպանվում։</span></label>
+<button id="submit" class="wide" type="submit" disabled data-text="analyze">Վերլուծել նկարը</button>
+</form>
+<section class="card" style="margin-top:20px"><h2 data-text="result">Պատասխան</h2><p id="answer" role="status" aria-live="polite"></p><button id="clear" class="secondary" data-text="clear">Մաքրել նկարը և պատասխանը</button></section>
+<details class="card" style="margin-top:20px"><summary data-text="limitations">Ինչ է աշխատում, ինչ՝ ոչ</summary><p class="muted" data-text="limits">Սա Pocket Option-ի ուղիղ կապ չէ։ Նկարը չի ցույց տալիս ապագան։ Binance-ի սկանավորումն ու ծանուցումները դադարեցված են, հին տվյալները պահպանված են։ Pocket Option-ի ավտոմատ ծանուցումներ կամ արդյունքի ավտոմատ ստուգում դեռ չկան։ Մոմի ժամանակը և գործարքի ավարտը տարբեր բաներ են։ Սկզբում փորձարկեք demo-ում։</p></details>
+</main><script defer src="/static/js/pocket.js?v=1"></script><script defer src="/static/js/pwa.js?v=1"></script></body></html>

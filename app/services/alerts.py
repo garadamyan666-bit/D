@@ -32,6 +32,8 @@ def should_notify(item: dict[str, Any], threshold: float, last_notified_at: date
 
 
 def scan_alert_subscriptions(subscription_id: int | None = None) -> list[dict[str, Any]]:
+    if settings.active_workspace == 'POCKET_OPTION' or not settings.binance_enabled:
+        return []  # Preserve subscriptions, do not disable or delete them.
     outcomes: list[dict[str, Any]] = []
     with session_scope() as session:
         query = select(UserAlert).where(UserAlert.active.is_(True))

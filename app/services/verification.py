@@ -36,6 +36,9 @@ def result_for(signal, start, end):
 
 
 def verify_pending():
+    from app.config import settings
+    if settings.active_workspace == 'POCKET_OPTION' or not settings.binance_enabled:
+        return  # Pending Binance records stay intact until explicitly resumed.
     now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
     with session_scope() as session:
         rows = session.scalars(select(ForecastCheck).where(ForecastCheck.status == 'PENDING',

@@ -58,6 +58,8 @@ class BinanceClient:
         self.session.headers.update({"User-Agent": "TradeAnalysisBot/1.0 (market-data-only)"})
 
     def _get(self, path: str, params: dict[str, Any] | None = None) -> Any:
+        if settings.active_workspace == 'POCKET_OPTION' or not settings.binance_enabled:
+            raise BinanceError('Binance is paused while Pocket Option workspace is active')
         with self._lock:
             BinanceClient._blocked_until = max(BinanceClient._blocked_until, self._saved_pause())
             if self.retry_after_seconds():

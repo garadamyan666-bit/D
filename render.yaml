@@ -9,6 +9,8 @@ services:
     healthCheckPath: /healthz
     autoDeployTrigger: commit
     envVars:
+      - key: ACTIVE_WORKSPACE
+        value: POCKET_OPTION
       - key: PYTHON_VERSION
         value: 3.12.14
       - key: DATABASE_URL

@@ -17,6 +17,7 @@ def _csv(name: str, default: str) -> list[str]:
 
 @dataclass(frozen=True)
 class Settings:
+    active_workspace: str = field(default_factory=lambda: os.getenv('ACTIVE_WORKSPACE', 'POCKET_OPTION').upper())
     openai_api_key: str = field(default_factory=lambda: os.getenv("OPENAI_API_KEY", ""))
     openai_vision_model: str = field(default_factory=lambda: os.getenv("OPENAI_VISION_MODEL", "gpt-5.6-luna"))
     telegram_bot_token: str = field(default_factory=lambda: os.getenv("TELEGRAM_BOT_TOKEN", ""))
