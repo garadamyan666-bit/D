@@ -48,8 +48,8 @@ def validate_image(data_url: str) -> str:
 
 
 def analyze_chart(data_url: str, symbol: str, timeframe: str, expiry_minutes=5, language='hy', market_type='OTC') -> str:
-    if not settings.openai_api_key:
-        raise ChartVisionError("Տեսողական AI-ը դեռ միացված չէ․ անհրաժեշտ է OPENAI_API_KEY։")
+    if not settings.gemini_api_key:
+        raise ChartVisionError('Gemini-ը դեռ միացված չէ․ անհրաժեշտ է GEMINI_API_KEY։')
     image = validate_image(data_url)
     prompt = f"""Review a Pocket Option chart screenshot for education, not a live trading signal.
 Reply only in { {'hy':'Armenian','ru':'Russian','en':'English'}[language] }, at most 180 words.
@@ -67,35 +67,38 @@ User-provided labels (not verified): market={symbol!r}, candle timeframe={timefr
 market type={market_type!r}, intended expiry={expiry_minutes} minutes.
 If these disagree with visible labels, flag the conflict and WAIT."""
     try:
+        model = settings.gemini_vision_model
+        if not re.fullmatch(r'gemini-[a-zA-Z0-9.-]+', model):
+            raise ChartVisionError('Invalid Gemini model configuration')
+        mime, encoded = DATA_URL.fullmatch(image).groups()
         response = requests.post(
-            "https://api.openai.com/v1/responses",
-            headers={"Authorization": f"Bearer {settings.openai_api_key}", "Content-Type": "application/json"},
-            json={
-                "model": settings.openai_vision_model,
-                "store": False,
-                "max_output_tokens": 1200,
-                "instructions": prompt,
-                "input": [{"role": "user", "content": [
-                    {"type": "input_text", "text": 'Review this chart using the required cautious format.'},
-                    {"type": "input_image", "image_url": image, "detail": "high"},
-                ]}],
-            },
-            timeout=75,
+            f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent',
+            headers={'x-goog-api-key': settings.gemini_api_key, 'Content-Type':'application/json'},
+            json={'systemInstruction': {'parts':[{'text':prompt}]},
+                  'contents':[{'role':'user','parts':[
+                      {'text':'Review this chart using the required cautious format.'},
+                      {'inlineData':{'mimeType':mime,'data':encoded}}]}],
+                  'generationConfig':{'maxOutputTokens':2048}, 'store':False},
+            timeout=(10, 75),
         )
         response.raise_for_status()
         payload = response.json()
-        if payload.get('status') not in (None, 'completed'):
-            raise ChartVisionError('AI response incomplete; please retry with a clearer chart')
-        chunks = [part.get("text", "") for item in payload.get("output", [])
-                  for part in item.get("content", []) if part.get("type") == "output_text"]
+        candidates = payload.get('candidates', [])
+        if not candidates or candidates[0].get('finishReason') != 'STOP':
+            raise ChartVisionError('Gemini-ի պատասխանը բացակայում է կամ ամբողջական չէ․ փորձեք այլ հստակ նկար։')
+        chunks = [part.get('text', '') for part in candidates[0].get('content', {}).get('parts', []) if not part.get('thought')]
         text = "\n".join(chunk for chunk in chunks if chunk).strip()
         if not text:
             raise ChartVisionError("AI-ից պատասխան չստացվեց։")
         return text
     except requests.RequestException as exc:
         status = getattr(exc.response, "status_code", None)
-        if status == 401:
-            raise ChartVisionError("OpenAI API key-ը սխալ է կամ անվավեր։") from None
+        if status in (400, 401, 403):
+            raise ChartVisionError('Gemini-ը մերժեց հարցումը․ ստուգեք բանալին, դրա թույլտվությունները և մոդելի հասանելիությունը։') from None
+        if status == 404:
+            raise ChartVisionError('Ընտրված Gemini մոդելը հասանելի չէ այս նախագծին։') from None
         if status == 429:
-            raise ChartVisionError("OpenAI սահմանաչափը սպառվել է․ ստուգեք API billing-ը։") from None
+            raise ChartVisionError('Gemini-ի անվճար սահմանաչափը հասել է շեմին կամ հասանելի չէ․ փորձեք ավելի ուշ։ Վճարովի ծառայության չենք անցնում։') from None
         raise ChartVisionError("Տեսողական AI ծառայությունը ժամանակավորապես անհասանելի է։") from None
+    except (ValueError, TypeError, KeyError, AttributeError):
+        raise ChartVisionError('Gemini-ից ստացվեց անընթեռնելի պատասխան։') from None

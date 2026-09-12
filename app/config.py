@@ -17,6 +17,8 @@ def _csv(name: str, default: str) -> list[str]:
 
 @dataclass(frozen=True)
 class Settings:
+    gemini_api_key: str = field(default_factory=lambda: os.getenv('GEMINI_API_KEY', '').strip())
+    gemini_vision_model: str = field(default_factory=lambda: os.getenv('GEMINI_VISION_MODEL', 'gemini-3.8-flash').strip())
     active_workspace: str = field(default_factory=lambda: os.getenv('ACTIVE_WORKSPACE', 'POCKET_OPTION').upper())
     openai_api_key: str = field(default_factory=lambda: os.getenv("OPENAI_API_KEY", ""))
     openai_vision_model: str = field(default_factory=lambda: os.getenv("OPENAI_VISION_MODEL", "gpt-5.6-luna"))

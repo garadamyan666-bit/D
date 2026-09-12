@@ -13,9 +13,9 @@ main{max-width:850px;margin:auto;padding:18px}nav{display:flex;gap:18px;flex-wra
 <label><span data-text="type">Շուկայի տեսակ</span><select id="marketType"><option>OTC</option><option value="REGULAR">Regular</option></select></label>
 <label><span data-text="timeframe">Մեկ մոմի ժամանակը</span><select id="candleTime"><option>M1</option><option>M5</option><option>M15</option><option>M30</option><option>H1</option></select></label>
 <label><span data-text="expiry">Գործարքի նախատեսված տևողությունը՝ րոպե</span><input id="expiry" type="number" min="1" max="60" value="5" required></label>
-<label class="wide consent"><input id="consent" type="checkbox" required><span data-text="consent">Համաձայն եմ նկարը ուղարկել OpenAI-ին։ Նախ կտրել եմ անձնական տվյալները։ Նկարը մեր բազայում չի պահպանվում։</span></label>
+<label class="wide consent"><input id="consent" type="checkbox" required><span data-text="consent">Համաձայն եմ նկարը ուղարկել Google Gemini-ին։ Նախ կտրել եմ անձնական տվյալները։ Նկարը մեր բազայում չի պահպանվում։</span></label>
 <button id="submit" class="wide" type="submit" disabled data-text="analyze">Վերլուծել նկարը</button>
 </form>
 <section class="card" style="margin-top:20px"><h2 data-text="result">Պատասխան</h2><p id="answer" role="status" aria-live="polite"></p><button id="clear" class="secondary" data-text="clear">Մաքրել նկարը և պատասխանը</button></section>
 <details class="card" style="margin-top:20px"><summary data-text="limitations">Ինչ է աշխատում, ինչ՝ ոչ</summary><p class="muted" data-text="limits">Սա Pocket Option-ի ուղիղ կապ չէ։ Նկարը չի ցույց տալիս ապագան։ Binance-ի սկանավորումն ու ծանուցումները դադարեցված են, հին տվյալները պահպանված են։ Pocket Option-ի ավտոմատ ծանուցումներ կամ արդյունքի ավտոմատ ստուգում դեռ չկան։ Մոմի ժամանակը և գործարքի ավարտը տարբեր բաներ են։ Սկզբում փորձարկեք demo-ում։</p></details>
-</main><script defer src="/static/js/pocket.js?v=1"></script><script defer src="/static/js/pwa.js?v=1"></script></body></html>
+</main><script defer src="/static/js/pocket.js?v=2-gemini"></script><script defer src="/static/js/pwa.js?v=1"></script></body></html>

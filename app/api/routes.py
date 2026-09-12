@@ -63,7 +63,7 @@ def health() -> dict:
 def workspace():
     return {'workspace': settings.active_workspace,
             'binance_paused': settings.active_workspace == 'POCKET_OPTION' or not settings.binance_enabled,
-            'vision_configured': bool(settings.openai_api_key), 'pocket_live_connected': False}
+            'vision_configured': bool(settings.gemini_api_key), 'vision_provider': 'Gemini', 'pocket_live_connected': False}
 
 
 @router.get("/symbols")
@@ -131,7 +131,7 @@ def chart_analysis(payload: ChartAnalysisRequest, request: Request) -> dict:
     symbol = payload.symbol.strip().upper()
     timeframe = payload.timeframe.strip().upper()
     if not payload.consent:
-        raise HTTPException(400, 'Confirm image transfer to OpenAI first')
+        raise HTTPException(400, 'Confirm image transfer to Google Gemini first')
     if timeframe not in {'M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1'}:
         raise HTTPException(400, 'Select the chart candle timeframe')
     try:
