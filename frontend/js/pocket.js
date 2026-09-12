@@ -8,7 +8,7 @@ let lang=localStorage.getItem('trade-language')||'hy';if(!words[lang])lang='hy';
 let configured=false,busy=false,imageUrl=null,requestVersion=0;
 const t=key=>words[lang][key];
 function render(){document.documentElement.lang=lang;$('language').value=lang;document.querySelectorAll('[data-text]').forEach(el=>el.textContent=t(el.dataset.text));$('notice').textContent=t(configured?'ready':'missing');$('submit').disabled=!configured||busy;if(!$('answer').textContent)$('answer').textContent=t('empty');}
-$('language').onchange=()=>{lang=$('language').value;localStorage.setItem('trade-language',lang);render();};
+$('language').onchange=()=>{const empty=$('answer').textContent===t('empty');lang=$('language').value;localStorage.setItem('trade-language',lang);if(empty)$('answer').textContent=t('empty');render();};
 function clear(){requestVersion++;$('chartForm').reset();if(imageUrl)URL.revokeObjectURL(imageUrl);imageUrl=null;$('preview').removeAttribute('src');$('preview').hidden=true;$('answer').textContent=t('empty');}
 $('clear').onclick=clear;
 $('chartImage').onchange=()=>{requestVersion++;$('answer').textContent=t('empty');const file=$('chartImage').files[0];if(imageUrl)URL.revokeObjectURL(imageUrl);$('preview').hidden=true;if(!file)return;if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>5*1024*1024){$('chartImage').value='';$('answer').textContent=t('bad');return;}imageUrl=URL.createObjectURL(file);$('preview').src=imageUrl;$('preview').hidden=false;};
